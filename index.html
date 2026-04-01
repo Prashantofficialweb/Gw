@@ -1,257 +1,174 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Star Sports // Dillzy </title>
-<meta name="referrer" content="no-referrer">
+<title>Gw Ztreaming // Light Green</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
 
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FMP9RE96D"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+<style>
+    :root {
+        --gw-green: #90EE90; /* Light Green */
+        --gw-dark: #1b1b1b;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body { background: #000; font-family: sans-serif; height: 100vh; overflow: hidden; }
 
-  gtag('config', 'G-FMP9RE96D');
-</script>
-  <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+    #player-container {
+        width: 100%;
+        height: 100%;
+        background: #000;
+    }
 
-.shaka-video-container{
-position:fixed;
-inset:0;
-background:#000;
-display:flex;
-align-items:center;
-justify-content:center;
-}
+    video { width: 100%; height: 100%; }
 
-video{
-width:100%;
-height:100%;
-object-fit:contain;
-background:#000;
-}
+    /* Light Green Branding */
+    .brand-overlay {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 10;
+        color: var(--gw-green);
+        font-weight: bold;
+        font-size: 18px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        pointer-events: none;
+    }
 
-.custom-watermark{
-position:absolute;
-z-index:40;
-pointer-events:none;
-top:65%;
-left:6%;
-transform:translateY(-50%);
-font-size:11px;
-font-weight:600;
-color:rgba(255,255,255,0.12);
-}
+    .live-tag {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: var(--gw-green);
+        color: #000;
+        padding: 3px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        font-size: 12px;
+        z-index: 10;
+    }
 
-/* --- Updated Modern Blocker Styles --- */
-.block-overlay{
-position:fixed;
-inset:0;
-z-index:99999;
-display:flex;
-align-items:center;
-justify-content:center;
-background:radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-text-align:center;
-}
+    /* Custom Green Seekbar */
+    .shaka-range-element { color: var(--gw-green) !important; }
+    .shaka-play-button { color: var(--gw-green) !important; }
+    .shaka-current-time { color: #fff !important; }
 
-.block-box{
-padding:40px;
-max-width:500px;
-width:90%;
-background:rgba(20, 20, 20, 0.95);
-border-radius:16px;
-border:1px solid rgba(255, 255, 255, 0.1);
-box-shadow:0 20px 50px rgba(0,0,0,0.5);
-animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
-from { opacity: 0; transform: translateY(30px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-.block-title{
-font-size:42px;
-font-weight:800;
-color:#ffffff;
-text-transform:uppercase;
-letter-spacing:2px;
-margin-bottom:20px;
-text-shadow:0 0 10px rgba(255, 0, 0, 0.3);
-}
-
-.block-sub{
-font-size:14px;
-font-weight:500;
-color:rgba(255, 255, 255, 0.6);
-line-height:1.6;
-}
-
-/* Icon hidden as requested, but keeping structure if needed later */
-.block-icon{ display: none; }
-.block-note{ display: none; }
-
-@media(max-width:700px){
-.custom-watermark{font-size:9px;top:60%;left:16%}
-.block-title{font-size:28px}
-.block-box{padding:25px}
-.block-sub{font-size:12px}
-}
+    /* Error Message Style */
+    #status-msg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--gw-green);
+        text-align: center;
+        display: none;
+        z-index: 100;
+        background: rgba(0,0,0,0.8);
+        padding: 20px;
+        border: 1px solid var(--gw-green);
+    }
 </style>
 </head>
 <body>
 
-<div class="shaka-video-container" id="player-container">
-<video id="video" autoplay muted playsinline preload="metadata"></video>
-<div class="custom-watermark"> </div>
+<div class="brand-overlay">GW ZTREAMING</div>
+<div class="live-tag">LIVE</div>
+<div id="status-msg">Connecting to Ztreaming...</div>
+
+<div id="player-container">
+    <video id="video" autoplay muted playsinline></video>
 </div>
 
 <script>
-(function(){
-  
-  function isSandboxedEnv(){
-    try {
-      if (window.self === window.top) return false;
-      if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
-        return true;
-      }
-      try {
-        document.domain = document.domain;
-        if (window.frameElement && !window.frameElement.getAttribute("sandbox")) {
-             return false;
-        }
-      } catch (e) {
-         return true;
-      }
-      return false;
-    } catch(e) {
-      return true;
-    }
-  }
-  function triggerBlockScreen(title, message){
-    const container = document.getElementById("player-container");
-    const video = document.getElementById("video");
-    
-    try {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    } catch(e){}
+const CONFIG = {
+    url: "https://jiotvmblive.cdn.jio.com//bpk-tv/Star_Sports_HD1_Hindi_BTS/output/index.mpd",
+    keyId: "400131994b445d8c8817202248760fda",
+    key: "2d56cb6f07a75b9aff165d534ae2bfc4",
+    cookieUrl: "https://allrounder-live.pages.dev/api/cookie.json"
+};
 
-    const overlay = document.createElement("div");
-    overlay.className = "block-overlay";
-    overlay.id = "sandbox-block-display";
-    overlay.innerHTML = `
-      <div class="block-box">
-        <div class="block-title">${title}</div>
-        <div class="block-sub">${message}</div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    container.style.display = 'none';
-  }
-  if(isSandboxedEnv()){
+async function initGwPlayer() {
+    const video = document.getElementById('video');
+    const container = document.getElementById('player-container');
+    const status = document.getElementById('status-msg');
 
-    triggerBlockScreen('Disable Sandbox', 'Opening Chrome Browser Only & Disable Ad blocker');
-    return;
-  }
-  const CONFIG={
-    streamUrl:"https://jiotvmblive.cdn.jio.com//bpk-tv/Star_Sports_HD1_Hindi_BTS/output/index.mpd",
-    keyId:"400131994b445d8c8817202248760fda",
-    key:"2d56cb6f07a75b9aff165d534ae2bfc4",
-    cookieUrl:"https://allrounder-live.pages.dev/api/cookie.json"
-  };
-
-  document.addEventListener("DOMContentLoaded",async()=>{
-
+    // Initialize Shaka
     shaka.polyfill.installAll();
-    if(!shaka.Player.isBrowserSupported()) return;
+    if (!shaka.Player.isBrowserSupported()) {
+        status.innerText = "Browser Not Supported";
+        status.style.display = "block";
+        return;
+    }
 
-    const video=document.getElementById("video");
-    const container=document.getElementById("player-container");
+    const player = new shaka.Player(video);
+    const ui = new shaka.ui.Overlay(player, container, video);
 
-    video.muted=true;
-
-    const player=new shaka.Player();
-    await player.attach(video);
-
-    const ui=new shaka.ui.Overlay(player,container,video);
-
+    // Green Theme UI
     ui.configure({
-  addBigPlayButton: true,
-  controlPanelElements: [
-    "mute",           // First - volume/mute button
-    "play_pause",     // Second - play/pause button  
-    "time_and_duration", // Third - timeline timings (00:00 / 00:00)
-    "spacer",
-    "quality",
-    "picture_in_picture",
-    "fullscreen"
-  ],
-  seekBarColors: {
-    base: "white",
-    buffered: "red", 
-    played: "green"
-  }
-});
+        'controlPanelElements': ["play_pause", "mute", "volume", "spacer", "quality", "fullscreen"],
+        'seekBarColors': {
+            base: 'rgba(255,255,255,0.2)',
+            buffered: 'rgba(144, 238, 144, 0.4)',
+            played: '#90EE90' 
+        }
+    });
 
     player.configure({
-      drm:{clearKeys:{[CONFIG.keyId]:CONFIG.key}},
-      manifest:{defaultPresentationDelay:5},
-      streaming:{
-        lowLatencyMode:true,
-        bufferingGoal:10,
-        rebufferingGoal:2,
-        safeSeekOffset:5
-      }
-    });
-
-    let cookieValue="";
-
-    try{
-      const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"});
-      const data=await response.json();
-      cookieValue=data.cookie||"";
-    }catch(e){}
-
-    if(cookieValue){
-      player.getNetworkingEngine().registerRequestFilter((type,request)=>{
-        request.headers["Referer"]="https://www.jiotv.com/";
-        request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
-        request.headers["Cookie"]=cookieValue;
-
-        let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
-
-        if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||
-        type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&
-        !request.uris[0].includes("__hdnea__")){
-          const sep=request.uris[0].includes("?")?"&":"?";
-          request.uris[0]+=sep+"__hdnea__="+urlCookie;
+        drm: {
+            clearKeys: { [CONFIG.keyId]: CONFIG.key }
+        },
+        streaming: {
+            rebufferingGoal: 2,
+            bufferingGoal: 10,
         }
-      });
-    }
-
-    try{
-      await player.load(CONFIG.streamUrl);
-      video.play().catch(()=>{});
-    }catch(e){}
-
-    video.addEventListener("play",()=>{
-      video.muted=false;
     });
 
-  });
-})();
+    try {
+        // Fetch Token
+        const cookieRes = await fetch(CONFIG.cookieUrl);
+        const cookieData = await cookieRes.json();
+        let fullCookie = cookieData.cookie || "";
+        
+        // Clean Token (Removes __hdnea__= prefix and any extra spaces)
+        let token = fullCookie.replace("__hdnea__=", "").split(';')[0].trim();
+
+        if(!token) {
+            status.innerText = "Error: Invalid Authentication Token";
+            status.style.display = "block";
+        }
+
+        // Apply Token to Network Requests
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+            // Note: Referer and User-Agent are often blocked by browsers.
+            // We focus on adding the token to the URL which is more reliable.
+            if (token) {
+                const separator = request.uris[0].includes('?') ? '&' : '?';
+                request.uris[0] += separator + "__hdnea__=" + token;
+            }
+        });
+
+        // Load Stream
+        await player.load(CONFIG.url);
+        status.style.display = "none"; // Hide loading message
+        console.log("Gw Ztreaming Started!");
+
+    } catch (error) {
+        console.error("Load Error", error);
+        status.innerText = "Stream Offline or Keys Expired";
+        status.style.display = "block";
+    }
+}
+
+// Start player
+document.addEventListener('shaka-ui-loaded', initGwPlayer);
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window['shaka']) {
+        // Fallback if UI load event missed
+        setTimeout(initGwPlayer, 1000);
+    }
+});
 </script>
-  
-  
+
 </body>
 </html>
